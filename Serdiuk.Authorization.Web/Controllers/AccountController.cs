@@ -1,12 +1,8 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Serdiuk.Authorization.Web.Data;
-using Serdiuk.Authorization.Web.Data.IdentityModels;
-using Serdiuk.Authorization.Web.Infrastructure;
+using Serdiuk.Authorization.Web.Infrastructure.Interfaces;
 using Serdiuk.Authorization.Web.Models;
 using Serdiuk.Authorization.Web.Models.DTO;
-using System.Security.Claims;
 
 namespace Serdiuk.Authorization.Web.Controllers
 {
@@ -17,14 +13,16 @@ namespace Serdiuk.Authorization.Web.Controllers
         private readonly UserManager<IdentityUser> _userManager;
         private readonly IConfiguration _configuration;
         private readonly ITokenService _tokenService;
-        private readonly AppDbContext _context;
+        private readonly IUserService _userService;
 
-        public AccountController(UserManager<IdentityUser> userManager, IConfiguration configuration, ITokenService tokenService, AppDbContext context)
+        public AccountController(UserManager<IdentityUser> userManager,
+            IConfiguration configuration,
+            ITokenService tokenService, IUserService userService)
         {
             _userManager = userManager;
             _configuration = configuration;
             _tokenService = tokenService;
-            _context = context;
+            _userService = userService;
         }
         [HttpPost]
         public async Task<IActionResult> Login([FromBody]LoginRequestDto model)
@@ -49,14 +47,7 @@ namespace Serdiuk.Authorization.Web.Controllers
             var jwtToken =_tokenService.GenerateAccessToken(userExists, _configuration);
             var refreshToken = _tokenService.GenerateRefreshToken();
 
-            await _context.RefreshTokens.AddAsync(new RefreshToken
-            {
-                ExpiresAt = DateTime.UtcNow.AddMinutes(10),
-                IsRevoked = false,
-                Token = refreshToken,
-                UserId = userExists.Id,
-            });
-            await _context.SaveChangesAsync();
+            await _tokenService.AddNewRefreshToken(refreshToken, userExists.Id);
             return Ok(new AuthResponce { Result = true, Token = jwtToken, Refresh = refreshToken });
         
         }
@@ -93,14 +84,7 @@ namespace Serdiuk.Authorization.Web.Controllers
             var refresh = _tokenService.GenerateRefreshToken();
             //await _signInManager.SignInAsync(user, false); For ASP.Net MVC architecture
 
-            await _context.RefreshTokens.AddAsync(new RefreshToken
-            {
-                ExpiresAt = DateTime.UtcNow.AddMinutes(10),
-                IsRevoked = false,
-                Token = refresh,
-                UserId = user.Id,
-            });
-            await _context.SaveChangesAsync();
+            await _tokenService.AddNewRefreshToken(refresh, user.Id);
 
             return Ok(new AuthResponce
             {
@@ -119,7 +103,7 @@ namespace Serdiuk.Authorization.Web.Controllers
                     Result = false
                 });
 
-            var refreshToken = await _context.RefreshTokens.FirstAsync(x => x.Token == model.RefreshToken);
+            var refreshToken = await _tokenService.GetRefreshTokenByTokenAsync(model.RefreshToken); //_context.RefreshTokens.FirstAsync(x => x.Token == model.RefreshToken);
 
             if (refreshToken == null || refreshToken.IsRevoked)
                 return BadRequest(new AuthResponce
@@ -136,20 +120,14 @@ namespace Serdiuk.Authorization.Web.Controllers
                     Result = false
                 });
             }
-            var user = await _context.Users.FirstAsync(x => x.Id == refreshToken.UserId);
-
+            var user = await _userService.GetUserById(refreshToken.UserId);
+             
             var newAccessToken = _tokenService.GenerateAccessToken(user, _configuration);
             var newRefreshToken = _tokenService.GenerateRefreshToken();
 
-            refreshToken.IsRevoked = true;
+            _tokenService.SetRevokedRefreshToken(refreshToken);
 
-            await _context.RefreshTokens.AddAsync(new RefreshToken
-            {
-                ExpiresAt = DateTime.UtcNow.AddMinutes(10),
-                IsRevoked = false,
-                Token = newRefreshToken,
-                UserId = user.Id,
-            });
+            await _tokenService.AddNewRefreshToken(refreshToken.Token, user.Id);
 
             return Ok(new AuthResponce
             {

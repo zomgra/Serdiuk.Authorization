@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serdiuk.Authorization.Web.Data;
 using Serdiuk.Authorization.Web.Infrastructure;
+using Serdiuk.Authorization.Web.Infrastructure.Interfaces;
 using Serdiuk.Authorization.Web.Services;
 using System.Text;
 
