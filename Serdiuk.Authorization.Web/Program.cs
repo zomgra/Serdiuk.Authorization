@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serdiuk.Authorization.Web.Data;
+using Serdiuk.Authorization.Web.Infrastructure;
+using Serdiuk.Authorization.Web.Services;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+var jwtConfig = new JwtConfig(builder.Configuration);
 
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(c =>
 {
@@ -37,22 +40,12 @@ builder.Services.AddAuthentication(option =>
 })
     .AddJwtBearer(c =>
     {
-        var key = Encoding.ASCII.GetBytes(builder.Configuration.GetSection("JwtConfig:SecretKey").Value);
-
         c.SaveToken = true;
 
-        c.TokenValidationParameters = new TokenValidationParameters()
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(key),
-            ValidateIssuer = false,//dev only
-            ValidateAudience = false, // Dev only
-            RequireExpirationTime = false,// dev only   
-            ValidateLifetime = true,
-
-        };
+        c.TokenValidationParameters = jwtConfig.GetTokenValidationParameters();
     });
 
+builder.Services.AddTransient<ITokenService, TokenService>();
 
 var app = builder.Build();
 

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Serdiuk.Authorization.Web.Infrastructure;
 using System.Security.Claims;
 
 namespace Serdiuk.Authorization.Web.Controllers

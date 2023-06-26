@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.EntityFrameworkCore;
+using Serdiuk.Authorization.Web.Data;
+using Serdiuk.Authorization.Web.Data.IdentityModels;
 using Serdiuk.Authorization.Web.Infrastructure;
 using Serdiuk.Authorization.Web.Models;
 using Serdiuk.Authorization.Web.Models.DTO;
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 
 namespace Serdiuk.Authorization.Web.Controllers
 {
@@ -16,11 +16,15 @@ namespace Serdiuk.Authorization.Web.Controllers
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly IConfiguration _configuration;
+        private readonly ITokenService _tokenService;
+        private readonly AppDbContext _context;
 
-        public AccountController(UserManager<IdentityUser> userManager, IConfiguration configuration)
+        public AccountController(UserManager<IdentityUser> userManager, IConfiguration configuration, ITokenService tokenService, AppDbContext context)
         {
             _userManager = userManager;
             _configuration = configuration;
+            _tokenService = tokenService;
+            _context = context;
         }
         [HttpPost]
         public async Task<IActionResult> Login([FromBody]LoginRequestDto model)
@@ -42,8 +46,18 @@ namespace Serdiuk.Authorization.Web.Controllers
                     Errors = new() { "Invalid credentials" }, Result = false,
                 });
 
-            var jwtToken = GenerateJwtToken(userExists);
-            return Ok(new AuthResponce { Result = true, Token = jwtToken });
+            var jwtToken =_tokenService.GenerateAccessToken(userExists, _configuration);
+            var refreshToken = _tokenService.GenerateRefreshToken();
+
+            await _context.RefreshTokens.AddAsync(new RefreshToken
+            {
+                ExpiresAt = DateTime.UtcNow.AddMinutes(10),
+                IsRevoked = false,
+                Token = refreshToken,
+                UserId = userExists.Id,
+            });
+            await _context.SaveChangesAsync();
+            return Ok(new AuthResponce { Result = true, Token = jwtToken, Refresh = refreshToken });
         
         }
         [HttpPost]
@@ -75,38 +89,74 @@ namespace Serdiuk.Authorization.Web.Controllers
                 Errors = new() { "Server error, try again" },
                 });    
             }
-            var token = GenerateJwtToken(user); //Token for front-end (React, Angular etc)
-
+            var token = _tokenService.GenerateAccessToken(user,_configuration); //Token for front-end (React, Angular etc)
+            var refresh = _tokenService.GenerateRefreshToken();
             //await _signInManager.SignInAsync(user, false); For ASP.Net MVC architecture
+
+            await _context.RefreshTokens.AddAsync(new RefreshToken
+            {
+                ExpiresAt = DateTime.UtcNow.AddMinutes(10),
+                IsRevoked = false,
+                Token = refresh,
+                UserId = user.Id,
+            });
+            await _context.SaveChangesAsync();
 
             return Ok(new AuthResponce
             {
                 Result = true,
                 Token = token,
+                Refresh = refresh
             });
         }
-        private string GenerateJwtToken(IdentityUser user)
+        [HttpPost]
+        public async Task<IActionResult> Refresh([FromBody] RefreshRequestDto model)
         {
-            var jwtTokenHandler = new JwtSecurityTokenHandler();
-
-            var key = Encoding.ASCII.GetBytes(_configuration.GetSection("JwtConfig:SecretKey").Value);
-            var tokenDescriptor = new SecurityTokenDescriptor()
-            {
-                Subject = new ClaimsIdentity(new[]
+            if (model is null)
+                return BadRequest(new AuthResponce
                 {
-                    new Claim("Id", user.Id),
-                    new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-                    new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                    new Claim(JwtRegisteredClaimNames.Iat, DateTime.Now.ToUniversalTime().ToString()),
-                }),
-                Expires = DateTime.Now.AddMinutes(1),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)    
-            };
-            var token = jwtTokenHandler.CreateToken(tokenDescriptor);
-            var jwtToken = jwtTokenHandler.WriteToken(token);
+                    Errors = new() { "Invalid request" },
+                    Result = false
+                });
 
-            return jwtToken;
+            var refreshToken = await _context.RefreshTokens.FirstAsync(x => x.Token == model.RefreshToken);
+
+            if (refreshToken == null || refreshToken.IsRevoked)
+                return BadRequest(new AuthResponce
+                {
+                    Errors = new() { "Invalid refresh token" },
+                    Result = false
+                });
+
+            if (refreshToken.ExpiresAt < DateTime.UtcNow)
+            {
+                return BadRequest(new AuthResponce
+                {
+                    Errors = new() { "Refresh token expires." },
+                    Result = false
+                });
+            }
+            var user = await _context.Users.FirstAsync(x => x.Id == refreshToken.UserId);
+
+            var newAccessToken = _tokenService.GenerateAccessToken(user, _configuration);
+            var newRefreshToken = _tokenService.GenerateRefreshToken();
+
+            refreshToken.IsRevoked = true;
+
+            await _context.RefreshTokens.AddAsync(new RefreshToken
+            {
+                ExpiresAt = DateTime.UtcNow.AddMinutes(10),
+                IsRevoked = false,
+                Token = newRefreshToken,
+                UserId = user.Id,
+            });
+
+            return Ok(new AuthResponce
+            {
+                Refresh = newRefreshToken,
+                Result = true,
+                Token = newAccessToken,
+            });
         }
     }
 }
