@@ -47,6 +47,7 @@ builder.Services.AddAuthentication(option =>
     });
 
 builder.Services.AddTransient<ITokenService, TokenService>();
+builder.Services.AddTransient<IUserService, UserService>();
 
 var app = builder.Build();
 
