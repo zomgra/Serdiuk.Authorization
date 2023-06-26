@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Serdiuk.Authorization.Web.Controllers
 {
@@ -8,6 +10,13 @@ namespace Serdiuk.Authorization.Web.Controllers
     [Route("api/[controller]/[action]")]
     public class HomeController : Controller
     {
+        private readonly UserManager<IdentityUser> _userManager;
+
+        public HomeController(UserManager<IdentityUser> userManager)
+        {
+            _userManager = userManager;
+        }
+
         [HttpGet]
         [AllowAnonymous]
         public IActionResult Index()
@@ -16,10 +25,10 @@ namespace Serdiuk.Authorization.Web.Controllers
             return Ok(r);
         }
         [HttpGet]
-        public IActionResult IdentityRead()
+        public IActionResult GetIdentity()
         {
-
-            var r = new Random().Next(10000, 1000000000);
+            var userId = _userManager.GetUserId(User);
+            var r = new{ Email=User.FindFirst(ClaimTypes.Email).Value, Id=userId };
             return Ok(r);
         }
     }
