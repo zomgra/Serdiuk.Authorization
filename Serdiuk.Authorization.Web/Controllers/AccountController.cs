@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Serdiuk.Authorization.Web.Infrastructure.Interfaces;
-using Serdiuk.Authorization.Web.Models;
-using Serdiuk.Authorization.Web.Models.DTO;
+using Serdiuk.Authorization.Domain.IdentityModels;
+using Serdiuk.Authorization.Domain.Models.Identity;
+using Serdiuk.Authorization.Domain.Models.Identity.DTO;
+using Serdiuk.Services.Interfaces;
 
 namespace Serdiuk.Authorization.Web.Controllers
 {
@@ -10,12 +11,12 @@ namespace Serdiuk.Authorization.Web.Controllers
     [Route("api/[controller]/[action]")]
     public class AccountController : Controller
     {
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly IConfiguration _configuration;
         private readonly ITokenService _tokenService;
         private readonly IUserService _userService;
 
-        public AccountController(UserManager<IdentityUser> userManager,
+        public AccountController(UserManager<ApplicationUser> userManager,
             IConfiguration configuration,
             ITokenService tokenService, IUserService userService)
         {
@@ -67,7 +68,7 @@ namespace Serdiuk.Authorization.Web.Controllers
                     Result = false,
                 });
             }
-            var user = new IdentityUser()
+            var user = new ApplicationUser()
             {
                 Email = model.Email,
                 UserName = model.Name,

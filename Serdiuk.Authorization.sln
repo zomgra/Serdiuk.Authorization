@@ -3,7 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32922.545
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Serdiuk.Authorization.Web", "Serdiuk.Authorization.Web\Serdiuk.Authorization.Web.csproj", "{19B4CEC8-7052-45F2-AD23-09EA0725B1A0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Serdiuk.API", "Serdiuk.Authorization.Web\Serdiuk.API.csproj", "{19B4CEC8-7052-45F2-AD23-09EA0725B1A0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Serdiuk.Authorization.Domain", "Serdiuk.Authorization.Domain\Serdiuk.Authorization.Domain.csproj", "{8FB18C0A-7D26-4053-8121-F794608B161A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Serdiuk.Services", "Serdiuk.Services\Serdiuk.Services.csproj", "{1E549BF2-1D33-496B-B1A1-1AB863743928}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Serdiuk.Persistance", "Serdiuk.Persistance\Serdiuk.Persistance.csproj", "{4EB32482-999D-4C05-93D3-B7CF7766072D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +21,18 @@ Global
 		{19B4CEC8-7052-45F2-AD23-09EA0725B1A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{19B4CEC8-7052-45F2-AD23-09EA0725B1A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{19B4CEC8-7052-45F2-AD23-09EA0725B1A0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8FB18C0A-7D26-4053-8121-F794608B161A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8FB18C0A-7D26-4053-8121-F794608B161A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8FB18C0A-7D26-4053-8121-F794608B161A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8FB18C0A-7D26-4053-8121-F794608B161A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E549BF2-1D33-496B-B1A1-1AB863743928}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E549BF2-1D33-496B-B1A1-1AB863743928}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E549BF2-1D33-496B-B1A1-1AB863743928}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E549BF2-1D33-496B-B1A1-1AB863743928}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4EB32482-999D-4C05-93D3-B7CF7766072D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4EB32482-999D-4C05-93D3-B7CF7766072D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4EB32482-999D-4C05-93D3-B7CF7766072D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4EB32482-999D-4C05-93D3-B7CF7766072D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

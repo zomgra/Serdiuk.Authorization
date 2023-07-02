@@ -2,10 +2,11 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Serdiuk.Authorization.Web.Data;
 using Serdiuk.Authorization.Web.Infrastructure;
-using Serdiuk.Authorization.Web.Infrastructure.Interfaces;
-using Serdiuk.Authorization.Web.Services;
+using Serdiuk.Persistance;
+using Serdiuk.Persistance.Data;
+using Serdiuk.Services.Interfaces;
+using Serdiuk.Services.Services;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
